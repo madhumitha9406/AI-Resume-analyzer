@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="page-shell">
+        <div class="bg-orb orb-one"></div>
+        <div class="bg-orb orb-two"></div>
+
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark">AI</span>
+                <span>Resume Analyzer</span>
+            </div>
+            <span class="status-pill">Live skill match</span>
+        </header>
+
+        <main class="container">
+            <section class="hero">
+                <div class="hero-copy">
+                    <span class="eyebrow">Career intelligence</span>
+                    <h1>See how well your resume fits the role.</h1>
+                    <p>
+                        Upload your PDF and compare it with the job description to find the strongest skills,
+                        gaps, and opportunities for improvement.
+                    </p>
+                </div>
+
+                <div class="hero-card">
+                    <div class="mini-metric">
+                        <span class="mini-label">Top skill match</span>
+                        <strong>90%</strong>
+                    </div>
+                    <div class="sparkline">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </section>
+
+            <form action="/analyze" method="POST" enctype="multipart/form-data" class="analyzer-form">
+                <div class="panel upload-panel">
+                    <label for="resume" class="upload-box">
+                        <span class="label-title">Upload Resume (PDF)</span>
+                        <span class="upload-button">Choose file</span>
+                        <span class="file-name" id="file-name">No file selected</span>
+                    </label>
+                    <input id="resume" type="file" name="resume" accept=".pdf" required>
+                </div>
+
+                <div class="panel textarea-panel">
+                    <label for="job_description" class="label-title">Job Description</label>
+                    <textarea
+                        id="job_description"
+                        name="job_description"
+                        placeholder="Paste the job description here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="analyze-button">
+                    <span>Analyze Resume</span>
+                    <span class="button-arrow">→</span>
+                </button>
+            </form>
+
+            {% if match_percentage is defined %}
+            <section class="result-panel panel">
+                <div class="score-ring" aria-label="Match percentage" style="--score: {{ match_percentage }};">
+                    <div class="score-inner">
+                        <span id="scoreNumber">{{ match_percentage }}</span>
+                        <small>%</small>
+                    </div>
+                </div>
+
+                <div class="score-content">
+                    <h2>Resume Analysis Result</h2>
+                    <div class="progress-bar" aria-hidden="true">
+                        <span style="width: {{ match_percentage }}%"></span>
+                    </div>
+                    <p>Job Match Score</p>
+                </div>
+            </section>
+
+            <div class="skills-grid">
+                <div class="panel skills-panel">
+                    <h3>Resume Skills</h3>
+                    <div class="skills">
+                        {% for skill in resume_skills %}
+                        <span class="skill-pill skill-neutral">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="panel skills-panel">
+                    <h3>Matched Skills</h3>
+                    <div class="skills">
+                        {% for skill in matched_skills %}
+                        <span class="skill-pill skill-match">✓ {{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="panel skills-panel">
+                    <h3>Missing Skills</h3>
+                    {% if missing_skills %}
+                    <div class="gap-header">
+                        <span class="gap-count">{{ skill_gap_summary.total_missing }} missing</span>
+                        <span class="gap-label">Focus areas</span>
+                    </div>
+                    <div class="skills">
+                        {% for skill in missing_skills %}
+                        <span class="skill-pill skill-missing">✗ {{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="suggestion-box">
+                        <strong>Recommended next steps:</strong>
+                        <ul>
+                            {% for skill in skill_gap_summary.focus_areas %}
+                            <li>{{ skill }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="no-gap-box">
+                        Excellent! Your resume matches all skills in this role.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        const fileInput = document.querySelector('#resume');
+        const fileNameLabel = document.querySelector('#file-name');
+
+        if (fileInput && fileNameLabel) {
+            fileInput.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                fileNameLabel.textContent = file ? file.name : 'No file selected';
+            });
+        }
+
+        const scoreNumber = document.querySelector('#scoreNumber');
+        if (scoreNumber) {
+            const target = Number(scoreNumber.textContent.trim());
+            let current = 0;
+            const duration = 1200;
+            const stepTime = 20;
+            const increment = target / (duration / stepTime);
+
+            const timer = setInterval(function () {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                scoreNumber.textContent = current.toFixed(0);
+            }, stepTime);
+        }
+    </script>
+</body>
+
+</html>
